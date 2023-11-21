@@ -101,9 +101,9 @@ class ImageResize:
             scale_factor = 0.0
 
         if scale_factor > 0.0:
-            height, width = (max(round(height * scale_factor), 1), max(round(width * scale_factor), 1))
-            pixels = torch.nn.functional.interpolate(pixels.movedim(-1, 1), size=(height, width), mode="bicubic").movedim(1, -1).clamp(0.0, 1.0)
-            mask = torch.nn.functional.interpolate(mask.unsqueeze(0), size=(height, width), mode="bicubic").squeeze(0).clamp(0.0, 1.0)
+            pixels = torch.nn.functional.interpolate(pixels.movedim(-1, 1), scale_factor=scale_factor, mode="bicubic", antialias=True).movedim(1, -1).clamp(0.0, 1.0)
+            mask = torch.nn.functional.interpolate(mask.unsqueeze(0), scale_factor=scale_factor, mode="bicubic", antialias=True).squeeze(0).clamp(0.0, 1.0)
+            height, width = pixels.shape[1:3]
 
             crop_x *= scale_factor
             crop_y *= scale_factor
