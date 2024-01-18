@@ -38,16 +38,19 @@ class ImageResize:
 
     @classmethod
     def VALIDATE_INPUTS(s, action, smaller_side, larger_side, scale_factor, resize_mode, side_ratio, **_):
-        if action != s.ACTION_TYPE_RESIZE and s.parse_side_ratio(side_ratio) is None:
-            return f"Invalid side ratio: {side_ratio}"
+        if side_ratio is not None:
+            if action != s.ACTION_TYPE_RESIZE and s.parse_side_ratio(side_ratio) is None:
+                return f"Invalid side ratio: {side_ratio}"
 
-        if int(smaller_side > 0) + int(larger_side > 0) + int(scale_factor > 0) > 1:
-            return f"At most one scaling rule (smaller_side, larger_side, scale_factor) should be enabled by setting a non-zero value"
+        if smaller_side is not None and larger_side is not None and scale_factor is not None:
+            if int(smaller_side > 0) + int(larger_side > 0) + int(scale_factor > 0) > 1:
+                return f"At most one scaling rule (smaller_side, larger_side, scale_factor) should be enabled by setting a non-zero value"
 
-        if resize_mode == s.RESIZE_MODE_DOWNSCALE and scale_factor > 1.0:
-            return f"For resize_mode {s.RESIZE_MODE_DOWNSCALE}, scale_factor should be less than one but got {scale_factor}"
-        if resize_mode == s.RESIZE_MODE_UPSCALE and scale_factor > 0.0 and scale_factor < 1.0:
-            return f"For resize_mode {s.RESIZE_MODE_UPSCALE}, scale_factor should be larger than one but got {scale_factor}"
+        if scale_factor is not None:
+            if resize_mode == s.RESIZE_MODE_DOWNSCALE and scale_factor > 1.0:
+                return f"For resize_mode {s.RESIZE_MODE_DOWNSCALE}, scale_factor should be less than one but got {scale_factor}"
+            if resize_mode == s.RESIZE_MODE_UPSCALE and scale_factor > 0.0 and scale_factor < 1.0:
+                return f"For resize_mode {s.RESIZE_MODE_UPSCALE}, scale_factor should be larger than one but got {scale_factor}"
 
         return True
 
@@ -64,6 +67,10 @@ class ImageResize:
 
 
     def resize(self, pixels, action, smaller_side, larger_side, scale_factor, resize_mode, side_ratio, crop_pad_position, pad_feathering, mask_optional=None):
+        validity = self.VALIDATE_INPUTS(action, smaller_side, larger_side, scale_factor, resize_mode, side_ratio)
+        if validity is not True:
+            raise Exception(validity)
+
         height, width = pixels.shape[1:3]
         if mask_optional is None:
             mask = torch.zeros(1, height, width, dtype=torch.float32)
